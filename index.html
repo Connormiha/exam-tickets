@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    .header {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="main">
+    <header class="header">
+      <label>
+        <input type="radio" name="mode" value="editor" checked>
+        Editor
+      </label>
+      <label>
+        <input type="radio" name="mode" value="view">
+        Viewer
+      </label>
+    </header>
+    <div class="editor">
+      <form id="createForm">
+        <input type="text" placeholder="Title" name="title" required>
+        <textarea placeholder="Desctription" name="desctription" required></textarea>
+        <input type="submit" value="Create">
+      </form>
+      <a href=""  id="saveInFile" download="tickets-data.txt" target="_blank">
+        Save in file
+      </a>
+      <label>
+        Restore from file
+        <input type="file" id="restoreFromFileInput" >
+      </label>
+      <div id="cards-list"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const cardsList = document.querySelector('#cards-list');
+      const createForm = document.querySelector('#createForm');
+      const saveInFile = document.querySelector('#saveInFile');
+      const restoreFromFileInput = document.querySelector('#restoreFromFileInput');
+
+      function createTicket(value, desctription) {
+        const item = document.createElement('div');
+
+        item.className = 'card-list-item';
+
+        item.innerHTML = `
+          <div class="card-list-item__title">${value}</div>
+          <div class="card-list-item__desctription">${desctription.value}</div>
+        `;
+
+        return item;
+      }
+
+      createForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const item = createTicket(createForm.elements.title.value, createForm.elements.desctription.value);
+
+        cardsList.appendChild(item);
+      });
+
+      saveInFile.addEventListener('click', () => {
+        const tickets = Array.from(cardsList.children).map((item) => ({
+          title: item.querySelector('.card-list-item__title').innerHTML,
+          desctription: item.querySelector('.card-list-item__desctription').innerHTML
+        }));
+        const ticketsString = JSON.stringify(tickets);
+        const fileBlob = new Blob([ticketsString], {type: "application/octet-binary"});
+
+        saveInFile.href = URL.createObjectURL(fileBlob);
+      });
+
+      restoreFromFileInput.addEventListener('change', (e) => {
+        e.preventDefault();
+
+        const file = restoreFromFileInput.files[0];
+        const reader = new FileReader();
+
+        reader.readAsText(file);
+
+        reader.onload = function() {
+          const data = JSON.parse(reader.result);
+
+          cardsList.innerHTML = '';
+
+          for (const item of data) {
+            cardsList.appendChild(
+              createTicket(item.title, item.desctription)
+            );
+          }
+        };
+
+        reader.onerror = function() {
+          console.log(reader.error);
+        };
+      });
+    })();
+  </script>
+</body>
+</html>
