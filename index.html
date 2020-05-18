@@ -11,10 +11,71 @@
     }
 
     .header {
-      position: absolute;
+      padding: 10px;
+    }
+
+    .button {
+      background: #007bff;
+      border-radius: 4px;
+      border: 0;
+      color: #fff;
+      cursor: pointer;
+      display: inline-block;
+      font-family: Arial;
+      font-size: 14px;
+      padding: 5px 16px;
+      text-decoration: none;
+    }
+
+    .button:hover {
+      background: #0069d9;
+    }
+
+    .create-form {
+      display: none;
+      background: rgba(0, 0, 0, 0.6);
+      position: fixed;
       left: 0;
       top: 0;
-      width: 100%;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .create-form_visible {
+      display: block;
+    }
+
+    .create-form__form {
+      background: #e9ecef;
+      border-radius: 5px;
+      box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.5);
+      padding: 22px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .create-form__label {
+      display: block;
+      margin: 0 0 10px;
+    }
+
+    .create-form__label input[type="text"] {
+      display: block;
+      width: 400px;
+      height: 20px;
+    }
+
+    .create-form__label textarea {
+      display: block;
+      width: 400px;
+      height: 200px;
+    }
+
+    .cards-list-item {
+      padding: 10px;
+      border-radius: 5px;
     }
   </style>
 </head>
@@ -30,20 +91,31 @@
         Viewer
       </label>
     </header>
-    <div class="editor">
-      <form id="createForm">
-        <input type="text" placeholder="Title" name="title" required>
-        <textarea placeholder="Desctription" name="desctription" required></textarea>
-        <input type="submit" value="Create">
-      </form>
-      <a href=""  id="saveInFile" download="tickets-data.txt" target="_blank">
+    <section class="editor">
+      <a href="" class="button" id="saveInFile" download="tickets-data.txt" target="_blank">
         Save in file
       </a>
       <label>
         Restore from file
         <input type="file" id="restoreFromFileInput" >
       </label>
-      <div id="cards-list"></div>
+      <button id="createTicketButton" class="button" type="button">Create ticket</button>
+    </section>
+    <article id="cards-list"></article>
+    <div class="create-form">
+      <form id="createForm" class="create-form__form">
+        <label class="create-form__label">
+          <input type="text" placeholder="Title" name="title" autocomplete="off" required>
+        </label>
+        <label class="create-form__label">
+          <textarea placeholder="Desctription" name="desctription" required></textarea>
+        </label>
+        <label class="create-form__label">
+          Color:
+          <input type="color" name="color" value="#ff00aa">
+        </label>
+        <input type="submit" value="Create" class="button">
+      </form>
     </div>
   </div>
 
@@ -51,16 +123,19 @@
     (function() {
       const cardsList = document.querySelector('#cards-list');
       const createForm = document.querySelector('#createForm');
+      const createFormModal = document.querySelector('.create-form');
       const saveInFile = document.querySelector('#saveInFile');
       const restoreFromFileInput = document.querySelector('#restoreFromFileInput');
+      const createTicketButton = document.querySelector('#createTicketButton');
 
-      function createTicket(value, desctription) {
+      function createTicket(value, desctription, color) {
         const item = document.createElement('div');
 
         item.className = 'card-list-item';
+        item.style.backgroundColor = color;
 
         item.innerHTML = `
-          <div class="card-list-item__title">${value}</div>
+          <h3 class="card-list-item__title">${value}</h3>
           <div class="card-list-item__desctription">${desctription.value}</div>
         `;
 
@@ -70,15 +145,23 @@
       createForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        const item = createTicket(createForm.elements.title.value, createForm.elements.desctription.value);
+        const item = createTicket(
+          createForm.elements.title.value,
+          createForm.elements.desctription.value,
+          createForm.elements.color.value
+        );
 
         cardsList.appendChild(item);
+        createFormModal.classList.remove('create-form_visible');
+        createForm.elements.title.value = '';
+        createForm.elements.desctription.value = '';
       });
 
       saveInFile.addEventListener('click', () => {
         const tickets = Array.from(cardsList.children).map((item) => ({
           title: item.querySelector('.card-list-item__title').innerHTML,
-          desctription: item.querySelector('.card-list-item__desctription').innerHTML
+          desctription: item.querySelector('.card-list-item__desctription').innerHTML,
+          color: item.style.backgroundColor
         }));
         const ticketsString = JSON.stringify(tickets);
         const fileBlob = new Blob([ticketsString], {type: "application/octet-binary"});
@@ -109,6 +192,16 @@
         reader.onerror = function() {
           console.log(reader.error);
         };
+      });
+
+      createTicketButton.addEventListener('click', () => {
+        createFormModal.classList.add('create-form_visible');
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.keyCode === 27) {
+          createFormModal.classList.remove('create-form_visible');
+        }
       });
     })();
   </script>
