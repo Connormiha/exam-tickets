@@ -20,6 +20,24 @@
       padding: 10px;
     }
 
+    .editor {
+      position: fixed;
+      top: 0;
+      right: 0;
+      padding: 5px 10px 0 0;
+      z-index: 2;
+    }
+
+    .radio-mode {
+      position: relative;
+      margin: 0 20px 0 0;
+    }
+
+    /* .radio-mode input {
+      opacity: 0;
+      position: absolute;
+    } */
+
     .button {
       background: #007bff;
       border-radius: 4px;
@@ -37,60 +55,6 @@
       background: #0069d9;
     }
 
-    .create-form {
-      display: none;
-      background: rgba(0, 0, 0, 0.6);
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 100vw;
-      height: 100vh;
-    }
-
-    .create-form_visible {
-      display: block;
-    }
-
-    .create-form__form {
-      background: #e9ecef;
-      border-radius: 5px;
-      box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.5);
-      padding: 22px;
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-    }
-
-    .create-form__close {
-      background: transparent;
-      border: 0;
-      color: #fff;
-      padding: 0;
-      position: absolute;
-      top: -30px;
-      right: 10px;
-      cursor: pointer;
-      font-size: 18px;
-    }
-
-    .create-form__label {
-      display: block;
-      margin: 0 0 10px;
-    }
-
-    .create-form__label input[type="text"] {
-      display: block;
-      width: 400px;
-      height: 20px;
-    }
-
-    .create-form__label textarea {
-      display: block;
-      width: 400px;
-      height: 200px;
-    }
-
     #cards-list {
       margin: 0 -20px;
     }
@@ -106,8 +70,45 @@
       vertical-align: top;
     }
 
+    .card-list-item_opened {
+      cursor: pointer;
+      position: fixed;
+      background: #fff;
+      left: 10px;
+      top: 10px;
+      bottom: 10px;
+      right: 10px;
+      z-index: 10;
+      width: auto;
+      padding: 30px;
+      border: 2px solid #000;
+    }
+
+    .card-list-item_used::after {
+      content: 'X';
+      position: absolute;
+      font-size: 120px;
+      z-index: 3;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
     .card-list-item__title {
+      font-size: 18px;
       margin: 0 0 10px;
+    }
+
+    .card-list-item__description {
+      font-size: 22px;
+    }
+
+    .card-list-item_opened .card-list-item__title {
+      font-size: 26px;
+    }
+
+    .card-list-item_opened .card-list-item__description {
+      font-size: 22px;
     }
 
     .card-list-item__close {
@@ -142,30 +143,31 @@
 
     .mode_viewer .card-list-item__background {
       display: block;
+      z-index: 2;
+      pointer-events: all;
     }
 
+    .mode_viewer .editor,
     .mode_viewer .card-list-item_opened .card-list-item__background {
       display: none;
     }
 
+    .mode_viewer .card-list-item_opened .card-list-item__close,
+    .mode_editor .card-list-item__close,
     .mode_editor .card-list-item__background,
     .mode_editor .card-list-item__color {
-      display: block;
-    }
-
-    .card-list-item__close {
       display: block;
     }
   </style>
 </head>
 <body class="mode_editor">
   <header class="header">
-    <label>
+    <label class="radio-mode">
       <input type="radio" name="mode" value="editor" checked>
       Editor
     </label>
-    <label>
-      <input type="radio" name="mode" value="view">
+    <label class="radio-mode">
+      <input type="radio" name="mode" value="viewer">
       Viewer
     </label>
   </header>
@@ -181,42 +183,27 @@
       <button id="createTicketButton" class="button" type="button">Create new ticket</button>
     </section>
     <article id="cards-list"></article>
-    <div class="create-form">
-      <form id="createForm" class="create-form__form">
-        <button class="create-form__close" title="Close" type="button">X</button>
-        <label class="create-form__label">
-          <input type="text" placeholder="Title" name="title" autocomplete="off" required>
-        </label>
-        <label class="create-form__label">
-          <textarea placeholder="Desctription" name="desctription" required></textarea>
-        </label>
-        <label class="create-form__label">
-          Color:
-          <input type="color" name="color" value="#ff00aa">
-        </label>
-        <input type="submit" value="Create" class="button">
-      </form>
-    </div>
   </div>
 
   <script>
     (function() {
       const cardsList = document.querySelector('#cards-list');
-      const createForm = document.querySelector('#createForm');
-      const createFormModal = document.querySelector('.create-form');
       const saveInFile = document.querySelector('#saveInFile');
       const restoreFromFileInput = document.querySelector('#restoreFromFileInput');
       const createTicketButton = document.querySelector('#createTicketButton');
+      let hasUnsavedData = false
+      let isEditableMode = true;
 
-      function createTicket(title, desctription, color) {
+      function createTicket(title, description, color) {
         const item = document.createElement('div');
 
         item.className = 'card-list-item';
+        item.tabIndex = '-1';
 
         item.innerHTML = `
           <button class="card-list-item__close" title="Close" type="button">X</button>
           <h3 class="card-list-item__title" contentEditable>${title}</h3>
-          <div class="card-list-item__desctription" contentEditable>${desctription}</div>
+          <div class="card-list-item__description" contentEditable>${description}</div>
           <div class="card-list-item__background" style="background:${color}"></div>
           <input type="color" class="card-list-item__color" value="${color}">
         `;
@@ -224,8 +211,13 @@
         const backgroundElement = item.querySelector('.card-list-item__background');
 
         item.querySelector('.card-list-item__close').addEventListener('click', () => {
-          if (confirm('Do you want to delete this ticket')) {
-            item.remove();
+          if (isEditableMode) {
+            if (confirm('Do you want to delete this ticket')) {
+              item.remove();
+            }
+          } else {
+            item.classList.remove('card-list-item_opened');
+            item.classList.add('card-list-item_used');
           }
         });
 
@@ -233,34 +225,25 @@
           backgroundElement.style.background = e.target.value;
         });
 
+        backgroundElement.addEventListener('click', () => {
+          item.classList.add('card-list-item_opened');
+        });
+
         return item;
       }
-
-      createForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const item = createTicket(
-          createForm.elements.title.value,
-          createForm.elements.desctription.value,
-          createForm.elements.color.value
-        );
-
-        cardsList.appendChild(item);
-        createFormModal.classList.remove('create-form_visible');
-        createForm.elements.title.value = '';
-        createForm.elements.desctription.value = '';
-      });
 
       saveInFile.addEventListener('click', () => {
         const tickets = Array.from(cardsList.children).map((item) => ({
           title: item.querySelector('.card-list-item__title').innerHTML,
-          desctription: item.querySelector('.card-list-item__desctription').innerHTML,
+          description: item.querySelector('.card-list-item__description').innerHTML,
           color: item.querySelector('.card-list-item__color').value
         }));
 
         const ticketsString = JSON.stringify(tickets);
 
         const fileBlob = new Blob([ticketsString], {type: "application/octet-binary"});
+
+        hasUnsavedData = false;
 
         saveInFile.href = URL.createObjectURL(fileBlob);
       });
@@ -278,9 +261,11 @@
 
           cardsList.innerHTML = '';
 
+          document.querySelector('.radio-mode input[value="viewer"]').click();
+
           for (const item of data) {
             cardsList.appendChild(
-              createTicket(item.title, item.desctription, item.color)
+              createTicket(item.title, item.description, item.color)
             );
           }
         };
@@ -291,11 +276,32 @@
       });
 
       createTicketButton.addEventListener('click', () => {
-        createFormModal.classList.add('create-form_visible');
+        const item = createTicket('Title', 'Description', '#ffccee');
+        cardsList.appendChild(item);
+        item.focus();
       });
 
-      document.querySelector('.create-form__close').addEventListener('click', () => {
-        createFormModal.classList.remove('create-form_visible');
+      function enableMode(mode) {
+        if (mode === 'editor') {
+          document.body.classList.add('mode_editor');
+          document.body.classList.remove('mode_viewer');
+          isEditableMode = true;
+          cardsList.querySelectorAll('.card-list-item_used').forEach((item) => {
+            item.classList.remove('card-list-item_used');
+          });
+        } else {
+          document.body.classList.remove('mode_editor');
+          document.body.classList.add('mode_viewer');
+          isEditableMode = false;
+        }
+      }
+
+      document.querySelectorAll('.radio-mode input').forEach((element) => {
+        element.addEventListener('change', () => {
+          if (element.checked) {
+            enableMode(element.value);
+          }
+        });
       });
 
       document.addEventListener('keydown', (e) => {
@@ -303,6 +309,17 @@
           createFormModal.classList.remove('create-form_visible');
         }
       });
+
+      cardsList.addEventListener('input', () => {
+        console.log('22');
+        hasUnsavedData = true;
+      });
+
+      window.onbeforeunload = function(e) {
+        const dialogText = 'You have unsaved data. Are you ready to exit?';
+        e.returnValue = dialogText;
+        return dialogText;
+      };
 
       for (let i = 1; i < 10; i++) {
         cardsList.appendChild(
