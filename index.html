@@ -96,7 +96,7 @@
     .card-list-item_used::after {
       content: 'X';
       position: absolute;
-      font-size: 120px;
+      font-size: 60px;
       z-index: 3;
       left: 50%;
       top: 50%;
@@ -148,6 +148,19 @@
       position: absolute;
       right: 10px;
       bottom: 10px;
+    }
+
+    .mode_viewer .card-list-item:not(.card-list-item_opened) {
+      cursor: pointer;
+      width: 150px;
+      height: 40px;
+      min-height: 40px;
+      margin: 10px;
+      overflow: hidden;
+    }
+
+    .mode_viewer .card-list-item:not(.card-list-item_opened):hover {
+      outline: 2px solid #0fccff;
     }
 
     .mode_viewer .card-list-item__background {
