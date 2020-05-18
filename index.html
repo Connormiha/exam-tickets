@@ -145,6 +145,7 @@
 
     .card-list-item__color {
       display: none;
+      border: 0;
       position: absolute;
       right: 10px;
       bottom: 10px;
@@ -243,7 +244,7 @@
           }
         });
 
-        item.querySelector('.card-list-item__color').addEventListener('change', (e) => {
+        item.querySelector('.card-list-item__color').addEventListener('input', (e) => {
           backgroundElement.style.background = e.target.value;
         });
 
