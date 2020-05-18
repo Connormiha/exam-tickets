@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <meta name="description" content="Tools for exam session. Create tickets for students">
+  <title>Exam tickets tools</title>
   <style>
     body {
       margin: 0;
@@ -16,16 +17,17 @@
     }
 
     .header {
-      background: #e9ecef;
+      background: rgba(233, 236, 239, 0.8);
       padding: 10px;
+      position: fixed;
+      left: 0;
+      top: 0;
+      right: 0;
+      z-index: 2;
     }
 
     .editor {
-      position: fixed;
-      top: 0;
-      right: 0;
-      padding: 5px 10px 0 0;
-      z-index: 2;
+      float: right;
     }
 
     .radio-mode {
@@ -57,6 +59,8 @@
 
     #cards-list {
       margin: 0 -20px;
+      padding: 50px 0 0;
+      z-index: 2;
     }
 
     .card-list-item {
@@ -162,16 +166,6 @@
 </head>
 <body class="mode_editor">
   <header class="header">
-    <label class="radio-mode">
-      <input type="radio" name="mode" value="editor" checked>
-      Editor
-    </label>
-    <label class="radio-mode">
-      <input type="radio" name="mode" value="viewer">
-      Viewer
-    </label>
-  </header>
-  <div class="main">
     <section class="editor">
       <a href="" class="button" id="saveInFile" download="tickets-data.txt" target="_blank">
         Save in file
@@ -182,6 +176,16 @@
       </label>
       <button id="createTicketButton" class="button" type="button">Create new ticket</button>
     </section>
+    <label class="radio-mode">
+      <input type="radio" name="mode" value="editor" checked>
+      Editor
+    </label>
+    <label class="radio-mode">
+      <input type="radio" name="mode" value="viewer">
+      Viewer
+    </label>
+  </header>
+  <div class="main">
     <article id="cards-list"></article>
   </div>
 
