@@ -242,7 +242,12 @@
 
         item.querySelector('.card-list-item__close').addEventListener('click', () => {
           if (isEditableMode) {
-            if (confirm('Do you want to delete this ticket')) {
+            if (
+              /^title \d+$/i.test(item.querySelector('.card-list-item__title').textContent) &&
+              /^description \d+$/i.test(item.querySelector('.card-list-item__description').textContent)
+            ) {
+              item.remove();
+            } else if (confirm('Do you want to delete this ticket')) {
               item.remove();
             }
           } else {
@@ -336,7 +341,11 @@
 
       document.addEventListener('keydown', (e) => {
         if (e.keyCode === 27) {
-          createFormModal.classList.remove('create-form_visible');
+          const openedTicketCloseBtn = cardsList.querySelector('.card-list-item_opened .card-list-item__close');
+
+          if (openedTicketCloseBtn) {
+            openedTicketCloseBtn.click();
+          }
         }
       });
 
@@ -345,11 +354,13 @@
       });
 
       window.onbeforeunload = function(e) {
-        if (hasUnsavedData) {
-          const dialogText = 'You have unsaved data. Are you ready to exit?';
-          e.returnValue = dialogText;
-          return dialogText;
+        if (!hasUnsavedData) {
+          return false;
         }
+
+        const dialogText = 'You have unsaved data. Are you ready to exit?';
+        e.returnValue = dialogText;
+        return dialogText;
       };
 
       for (let i = 1; i < 10; i++) {
