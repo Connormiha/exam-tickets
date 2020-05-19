@@ -7,6 +7,11 @@
   <meta http-equiv="cache-control" content="no-cache" />
   <script src="./sortable.js" defer></script>
   <title>Exam tickets tools</title>
+  <style id="style-vars">
+    :root {
+      --card-item-view-base-size: 5;
+    }
+  </style>
   <style>
     body {
       margin: 0;
@@ -15,7 +20,7 @@
     }
 
     .main {
-      padding: 20px 30px;
+      padding: 60px 30px 20px;
     }
 
     .header {
@@ -47,6 +52,13 @@
       position: absolute;
     } */
 
+    #view-card-size {
+      width: 80%;
+      max-width: 400px;
+      float: right;
+      display: none;
+    }
+
     .button {
       background: #007bff;
       border-radius: 4px;
@@ -66,7 +78,7 @@
 
     #cards-list {
       margin: 0 -20px;
-      padding: 50px 0 0;
+      padding: 10px 0 0;
       z-index: 2;
     }
 
@@ -160,9 +172,9 @@
 
     .mode_viewer .card-list-item:not(.card-list-item_opened) {
       cursor: pointer;
-      width: 150px;
-      height: 40px;
-      min-height: 40px;
+      width: calc(30px * var(--card-item-view-base-size));
+      height: calc(12px * var(--card-item-view-base-size));
+      min-height: auto;
       margin: 10px;
       overflow: hidden;
     }
@@ -182,6 +194,7 @@
       display: none;
     }
 
+    .mode_viewer #view-card-size,
     .mode_viewer .card-list-item_opened .card-list-item__close,
     .mode_editor .card-list-item__close,
     .mode_editor .card-list-item__background,
@@ -192,6 +205,7 @@
 </head>
 <body class="mode_editor">
   <header class="header">
+    <input type="range" min="1" max="25" step="0.25" value="5" id="view-card-size">
     <section class="editor">
       <a href="" class="button" id="saveInFile" download="tickets-data.txt" target="_blank">
         Save in file
@@ -221,6 +235,9 @@
       const saveInFile = document.querySelector('#saveInFile');
       const restoreFromFileInput = document.querySelector('#restoreFromFileInput');
       const createTicketButton = document.querySelector('#createTicketButton');
+      const viewCardInput = document.querySelector('#view-card-size');
+      const styleVars = document.querySelector('#style-vars');
+      let viewCardSize = Number(viewCardInput.value);
       let hasUnsavedData = false
       let isEditableMode = true;
 
@@ -274,7 +291,7 @@
           color: item.querySelector('.card-list-item__color').value
         }));
 
-        const ticketsString = JSON.stringify(tickets);
+        const ticketsString = JSON.stringify({tickets, viewCardSize});
 
         const fileBlob = new Blob([ticketsString], {type: "application/octet-binary"});
 
@@ -293,12 +310,17 @@
 
         reader.onload = function() {
           const data = JSON.parse(reader.result);
+          const tickets = data.tickets || data;
+          viewCardSize = data.viewCardSize || viewCardSize;
 
           cardsList.innerHTML = '';
 
+          viewCardInput.value = viewCardSize;
+          updateViewCardSize(viewCardSize);
+
           document.querySelector('.radio-mode input[value="viewer"]').click();
 
-          for (const item of data) {
+          for (const item of tickets) {
             cardsList.appendChild(
               createTicket(item.title, item.description, item.color)
             );
@@ -351,6 +373,15 @@
 
       cardsList.addEventListener('input', () => {
         hasUnsavedData = true;
+      });
+
+      function updateViewCardSize(size) {
+        viewCardSize = size;
+        styleVars.sheet.rules[0].style.cssText = `--card-item-view-base-size: ${viewCardSize};`
+      }
+
+      viewCardInput.addEventListener('input', () => {
+        updateViewCardSize(Number(viewCardInput.value));
       });
 
       window.onbeforeunload = function(e) {
